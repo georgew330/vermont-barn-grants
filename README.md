@@ -2,6 +2,16 @@
 
 An interactive geospatial analysis exploring the geographic distribution of Vermont's historic barn preservation grants and their relationship with community income.
 
+<p align="center">
+  <a href="https://georgew330.github.io/vermont-barn-grants/web/">
+    <strong>Link -> Vermont Historic Barn Grants Web Map</strong>
+  </a>
+</p>
+
+<p align="center">
+  <img src="brn.png" alt="Web Map Screenshot" width="800">
+</p>
+
 ## Research Question
 
 Is there a relationship between a Vermont community's household income and the amount of historic barn preservation grant funding it has received?

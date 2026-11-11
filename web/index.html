@@ -24,40 +24,57 @@
 
 
     <aside id="sidebar">
-        <h2>About This Project</h2>
-        <p>Barns are a staple of Vermont's agricultural and historic landscape, and one I think we don’t appreciate
-            enough. There was a barn in my life - well, sort of. My great grandfather, Drexel Hines, lived and worked in
-            New York City as a sound engineer for RCA and NBC in the 1930’s and 40’s. He fell in love with Vermont and
-            purchased a home in 1961 from a farmer in a town called Jamaica. The property featured a primary residence
-            accompanied by a large barn across the street. Fast forward to my lifetime and the barn was gone - taken
-            down by my
-            grandfather, Lee Hines, sometime in the late 1970's. There’s something both majestic and imposing about
-            barns in Vermont. If you’ve ever driven throughout the state you know what I mean. The feeling of
-            driving down a dirt road, surrounded by forest covered mountains, no cell phone service, no other cars, and
-            passing by a barn is what comes to mind when I think about the green mountain state.
-            <br><br>
-            In July 2026 during the initial months of my U.S. Peace Corps service, I often daydreamt about Vermont,
-            especially as fall came around but the weather in the Philippines remained brutally hot. In my fanciful,
-            reminiscent wanderlust for the green mountain state, I came across the historic barn preservation program.
-            The program was developed in 1992 to help rehabilitate the historic agricultural symbols of Vermont's rural
-            landscape and has shelled out over $5 million towards barn preservation. The program itself reflects the
-            values
-            of Vermonters, our deep appreciation for our state's beauty and dedication to maintaining it.
-            <br><br>
-            Having spent my summers growing up in southern Vermont, and my college years in Burlington - the most
-            northwestern part of the state, I had a pretty good understanding of the wealth discrepancies the state
-            faced. The stark contrasts between towns with money and those without was hard to miss. When I read about
-            the program, I was curious to know if funding favored wealthier towns - afterall, it wouldn't be a very
-            Vermont thing to do.
-            <br><br>
-            Vermont is an interesting state, we sport a declining population, roughly 78% of the state is forested,
-            outlawed billboards, have the smallest state economy with the 2nd smallest population in the U.S., and are
-            geographically in a relatively remote area of the country, yet quite close to the 2nd largest city in the
-            entire country of Canada - the French speaking Montreal, QC. I carry with me a feeling of gratitude having
-            the pleasure of spending so many years of my life here, as well as a deep sense of pride in being able to
-            call myself a Vermonter.
+        <div class="sidebar-header">
+            <h2>About This Project</h2>
+            <button id="sidebar-toggle" type="button" aria-label="Collapse About panel" aria-expanded="true">⌃</button>
+        </div>
 
-        </p>
+        <div id="sidebar-content">
+            <p>Barns are a staple of Vermont's agricultural and historic landscape, and one I think we don’t appreciate
+                enough. There was a barn in my life - well, sort of. My great grandfather, Drexel Hines, lived and
+                worked in
+                New York City as a sound engineer for RCA and NBC in the 1930’s and 40’s. He fell in love with Vermont
+                and
+                purchased a home in 1961 from a farmer in a town called Jamaica. The property featured a primary
+                residence
+                accompanied by a large barn across the street. Fast forward to my lifetime and the barn was gone - taken
+                down by my
+                grandfather, Lee Hines, sometime in the late 1970's. There’s something both majestic and imposing about
+                barns in Vermont. If you’ve ever driven throughout the state you know what I mean. The feeling of
+                driving down a dirt road, surrounded by forest covered mountains, no cell phone service, no other cars,
+                and
+                passing by a barn is what comes to mind when I think about the green mountain state.
+                <br><br>
+                In July 2026 during the initial months of my U.S. Peace Corps service, I often daydreamt about Vermont,
+                especially as fall came around but the weather in the Philippines remained brutally hot. In my fanciful,
+                reminiscent wanderlust for the green mountain state, I came across the historic barn preservation
+                program.
+                The program was developed in 1992 to help rehabilitate the historic agricultural symbols of Vermont's
+                rural
+                landscape and has shelled out over $5 million towards barn preservation. The program itself reflects the
+                values
+                of Vermonters, our deep appreciation for our state's beauty and dedication to maintaining it.
+                <br><br>
+                Having spent my summers growing up in southern Vermont, and my college years in Burlington - the most
+                northwestern part of the state, I had a pretty good understanding of the wealth discrepancies the state
+                faced. The stark contrasts between towns with money and those without was hard to miss. When I read
+                about
+                the program, I was curious to know if funding favored wealthier towns - afterall, it wouldn't be a very
+                Vermont thing to do.
+                <br><br>
+                Vermont is an interesting state, we sport a declining population, roughly 78% of the state is forested,
+                outlawed billboards, have the smallest state economy with the 2nd smallest population in the U.S., and
+                are
+                geographically in a relatively remote area of the country, yet quite close to the 2nd largest city in
+                the
+                entire country of Canada - the French speaking Montreal, QC. I carry with me a feeling of gratitude
+                having
+                the pleasure of spending so many years of my life here, as well as a deep sense of pride in being able
+                to
+                call myself a Vermonter.
+
+            </p>
+        </div>
     </aside>
 
     <div id="income-legend" class="vertical-legend">
@@ -123,14 +140,14 @@
             container: "map",
             style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
             center: [-72.7, 44.0],
-            zoom: 7.6
+            zoom: 6.8
         });
 
         const comparisonMap = new maplibregl.Map({
             container: "comparison-map",
             style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
             center: [-72.7, 44.0],
-            zoom: 7.6,
+            zoom: 6.8,
             interactive: false
         });
 
@@ -565,6 +582,19 @@
                 }
             });
 
+        });
+        const sidebar = document.getElementById("sidebar");
+        const sidebarToggle = document.getElementById("sidebar-toggle");
+
+        sidebarToggle.addEventListener("click", () => {
+            const collapsed = sidebar.classList.toggle("collapsed");
+
+            sidebarToggle.textContent = collapsed ? "⌄" : "⌃";
+            sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+            sidebarToggle.setAttribute(
+                "aria-label",
+                collapsed ? "Expand About panel" : "Collapse About panel"
+            );
         });
     </script>
 
