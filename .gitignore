@@ -7,3 +7,16 @@ __pycache__/
 
 # Environment variables / secrets
 .env
+
+#Folders
+/supplemental_pre2015_research_2026-09-30/
+
+#Imagefile
+plt.png
+
+#Data processing folder
+/data/
+
+#Web data
+/web/data/barn_locations.geojson
+/web/data/vermont_towns.geojson

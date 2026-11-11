@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vermont Barn Grants</title>
+    <link rel="icon" href="data:,">
+
+    <link rel="stylesheet" href="./style.css">
+    <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js"></script>
+
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="comparison-map"></div>
+    <div id="popup-overlay"></div>
+    <div id="swipe-divider">
+        <div class="swipe-handle">↔</div>
+    </div>
+
+
+    <aside id="sidebar">
+        <h2>About This Project</h2>
+        <p>Barns are a staple of Vermont's agricultural and historic landscape, and one I think we don’t appreciate
+            enough. There was a barn in my life - well, sort of. My great grandfather, Drexel Hines, lived and worked in
+            New York City as a sound engineer for RCA and NBC in the 1930’s and 40’s. He fell in love with Vermont and
+            purchased a home in 1961 from a farmer in a town called Jamaica. The property featured a primary residence
+            accompanied by a large barn across the street. Fast forward to my lifetime and the barn was gone - taken
+            down by my
+            grandfather, Lee Hines, sometime in the late 1970's. There’s something both majestic and imposing about
+            barns in Vermont. If you’ve ever driven throughout the state you know what I mean. The feeling of
+            driving down a dirt road, surrounded by forest covered mountains, no cell phone service, no other cars, and
+            passing by a barn is what comes to mind when I think about the green mountain state.
+            <br><br>
+            In July 2026 during the initial months of my U.S. Peace Corps service, I often daydreamt about Vermont,
+            especially as fall came around but the weather in the Philippines remained brutally hot. In my fanciful,
+            reminiscent wanderlust for the green mountain state, I came across the historic barn preservation program.
+            The program was developed in 1992 to help rehabilitate the historic agricultural symbols of Vermont's rural
+            landscape and has shelled out over $5 million towards barn preservation. The program itself reflects the
+            values
+            of Vermonters, our deep appreciation for our state's beauty and dedication to maintaining it.
+            <br><br>
+            Having spent my summers growing up in southern Vermont, and my college years in Burlington - the most
+            northwestern part of the state, I had a pretty good understanding of the wealth discrepancies the state
+            faced. The stark contrasts between towns with money and those without was hard to miss. When I read about
+            the program, I was curious to know if funding favored wealthier towns - afterall, it wouldn't be a very
+            Vermont thing to do.
+            <br><br>
+            Vermont is an interesting state, we sport a declining population, roughly 78% of the state is forested,
+            outlawed billboards, have the smallest state economy with the 2nd smallest population in the U.S., and are
+            geographically in a relatively remote area of the country, yet quite close to the 2nd largest city in the
+            entire country of Canada - the French speaking Montreal, QC. I carry with me a feeling of gratitude having
+            the pleasure of spending so many years of my life here, as well as a deep sense of pride in being able to
+            call myself a Vermonter.
+
+        </p>
+    </aside>
+
+    <div id="income-legend" class="vertical-legend">
+        <div class="legend-title">Median Household Income</div>
+        <div class="legend-content">
+            <div id="income-slider" class="range-slider">
+                <input id="income-min" type="range" min="13500" max="196000" step="500" value="13500"
+                    aria-label="Minimum median household income">
+                <input id="income-max" type="range" min="13500" max="196000" step="500" value="196000"
+                    aria-label="Maximum median household income">
+            </div>
+            <div id="income-range-label" class="range-value-label">All incomes ($13.5k-$196k)</div>
+            <div class="legend-bar income-bar" aria-label="Filter towns by median household income">
+                <span class="legend-segment"></span>
+                <span class="legend-segment"></span>
+                <span class="legend-segment"></span>
+                <span class="legend-segment"></span>
+                <span class="legend-segment"></span>
+            </div>
+            <div class="legend-labels range-labels">
+                <span>$13.5k-$67k</span>
+                <span>$67k-$76k</span>
+                <span>$76k-$86k</span>
+                <span>$86k-$101k</span>
+                <span>$101k-$196k</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="funding-legend" class="vertical-legend">
+        <div class="legend-title">Total Known Barn Grant Funding</div>
+        <div class="legend-content">
+            <div id="funding-slider" class="range-slider">
+                <input id="funding-min" type="range" min="0" max="155000" step="500" value="0"
+                    aria-label="Minimum known barn grant funding">
+                <input id="funding-max" type="range" min="0" max="155000" step="500" value="155000"
+                    aria-label="Maximum known barn grant funding">
+            </div>
+            <div id="funding-range-label" class="range-value-label">All funding ($0-$155k)</div>
+            <div class="legend-bar funding-bar" aria-label="Filter towns by known barn grant funding">
+                <span class="legend-segment"></span>
+                <span class="legend-segment"></span>
+                <span class="legend-segment"></span>
+                <span class="legend-segment"></span>
+                <span class="legend-segment"></span>
+            </div>
+            <div class="legend-labels range-labels">
+                <span>No known funding</span>
+                <span>Under $25k</span>
+                <span>$25k-$75k</span>
+                <span>$75k-$150k</span>
+                <span>$150k+</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        const protocol = new pmtiles.Protocol();
+        maplibregl.addProtocol("pmtiles", protocol.tile);
+
+        const map = new maplibregl.Map({
+            container: "map",
+            style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+            center: [-72.7, 44.0],
+            zoom: 7.6
+        });
+
+        const comparisonMap = new maplibregl.Map({
+            container: "comparison-map",
+            style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+            center: [-72.7, 44.0],
+            zoom: 7.6,
+            interactive: false
+        });
+
+        const incomeSlider = document.getElementById("income-slider");
+        const incomeMin = document.getElementById("income-min");
+        const incomeMax = document.getElementById("income-max");
+        const incomeRangeLabel = document.getElementById("income-range-label");
+        const incomeSliderBounds = { min: 13500, max: 196000 };
+
+        function formatIncome(value) {
+            const thousands = value / 1000;
+            return `$${Number.isInteger(thousands) ? thousands : thousands.toFixed(1)}k`;
+        }
+
+        function getTownDisplayName(properties) {
+            if (properties.GEOID === "5001161675") return "St. Albans City";
+            if (properties.GEOID === "5001161750") return "St. Albans Town";
+            return properties.NAME;
+        }
+
+        function renderIncomeSlider(minValue, maxValue) {
+            incomeMin.value = minValue;
+            incomeMax.value = maxValue;
+
+            const span = incomeSliderBounds.max - incomeSliderBounds.min;
+            const startPercent = ((minValue - incomeSliderBounds.min) / span) * 100;
+            const endPercent = ((maxValue - incomeSliderBounds.min) / span) * 100;
+
+            incomeSlider.style.setProperty("--range-start", `${startPercent}%`);
+            incomeSlider.style.setProperty("--range-end", `${endPercent}%`);
+
+            const isFullRange = minValue === incomeSliderBounds.min
+                && maxValue === incomeSliderBounds.max;
+
+            incomeRangeLabel.textContent = isFullRange
+                ? `All incomes (${formatIncome(minValue)}–${formatIncome(maxValue)})`
+                : `${formatIncome(minValue)}–${formatIncome(maxValue)}`;
+        }
+
+        function applyIncomeSliderFilter(changedHandle) {
+            let minValue = Number(incomeMin.value);
+            let maxValue = Number(incomeMax.value);
+
+            if (maxValue - minValue < 500) {
+                if (changedHandle === "min") {
+                    minValue = maxValue - 500;
+                } else {
+                    maxValue = minValue + 500;
+                }
+            }
+
+            minValue = Math.max(incomeSliderBounds.min, minValue);
+            maxValue = Math.min(incomeSliderBounds.max, maxValue);
+            renderIncomeSlider(minValue, maxValue);
+
+            if (!["towns-fill", "town-outline"].every((layerId) => map.getLayer(layerId))) return;
+
+            const isFullRange = minValue === incomeSliderBounds.min
+                && maxValue === incomeSliderBounds.max;
+            const sliderFilter = isFullRange
+                ? null
+                : ["all",
+                    [">=", ["get", "median_household_income"], minValue],
+                    ["<=", ["get", "median_household_income"], maxValue]
+                ];
+
+            map.setFilter("towns-fill", sliderFilter);
+            map.setFilter("town-outline", sliderFilter);
+        }
+
+        incomeMin.addEventListener("input", () => applyIncomeSliderFilter("min"));
+        incomeMax.addEventListener("input", () => applyIncomeSliderFilter("max"));
+        renderIncomeSlider(incomeSliderBounds.min, incomeSliderBounds.max);
+
+        const fundingSlider = document.getElementById("funding-slider");
+        const fundingMin = document.getElementById("funding-min");
+        const fundingMax = document.getElementById("funding-max");
+        const fundingRangeLabel = document.getElementById("funding-range-label");
+        const fundingSliderBounds = { min: 0, max: 155000 };
+
+        function formatFunding(value) {
+            if (value === 0) return "$0";
+            return `$${value / 1000}k`;
+        }
+
+        function renderFundingSlider(minValue, maxValue) {
+            fundingMin.value = minValue;
+            fundingMax.value = maxValue;
+
+            const span = fundingSliderBounds.max - fundingSliderBounds.min;
+            const startPercent = ((minValue - fundingSliderBounds.min) / span) * 100;
+            const endPercent = ((maxValue - fundingSliderBounds.min) / span) * 100;
+
+            fundingSlider.style.setProperty("--range-start", `${startPercent}%`);
+            fundingSlider.style.setProperty("--range-end", `${endPercent}%`);
+
+            const isFullRange = minValue === fundingSliderBounds.min
+                && maxValue === fundingSliderBounds.max;
+
+            fundingRangeLabel.textContent = isFullRange
+                ? `All funding (${formatFunding(minValue)}–${formatFunding(maxValue)})`
+                : `${formatFunding(minValue)}–${formatFunding(maxValue)}`;
+        }
+
+        function applyFundingSliderFilter(changedHandle) {
+            let minValue = Number(fundingMin.value);
+            let maxValue = Number(fundingMax.value);
+
+            if (maxValue - minValue < 500) {
+                if (changedHandle === "min") {
+                    minValue = maxValue - 500;
+                } else {
+                    maxValue = minValue + 500;
+                }
+            }
+
+            minValue = Math.max(fundingSliderBounds.min, minValue);
+            maxValue = Math.min(fundingSliderBounds.max, maxValue);
+            renderFundingSlider(minValue, maxValue);
+
+            if (!["funding-fill", "funding-outline"].every((layerId) => comparisonMap.getLayer(layerId))) return;
+
+            const isFullRange = minValue === fundingSliderBounds.min
+                && maxValue === fundingSliderBounds.max;
+            const sliderFilter = isFullRange
+                ? null
+                : ["all",
+                    [">=", ["get", "total_awarded"], minValue],
+                    ["<=", ["get", "total_awarded"], maxValue]
+                ];
+
+            comparisonMap.setFilter("funding-fill", sliderFilter);
+            comparisonMap.setFilter("funding-outline", sliderFilter);
+        }
+
+        fundingMin.addEventListener("input", () => applyFundingSliderFilter("min"));
+        fundingMax.addEventListener("input", () => applyFundingSliderFilter("max"));
+        renderFundingSlider(fundingSliderBounds.min, fundingSliderBounds.max);
+
+
+        map.on("move", () => {
+            comparisonMap.jumpTo({
+                center: map.getCenter(),
+                zoom: map.getZoom(),
+                bearing: map.getBearing(),
+                pitch: map.getPitch()
+            });
+        });
+
+
+        const divider = document.getElementById("swipe-divider");
+        const comparisonContainer = document.getElementById("comparison-map");
+
+        let activePopup = null;
+        let activePopupType = null;
+        let activePopupSide = null;
+        let isDragging = false;
+
+        divider.addEventListener("pointerdown", (e) => {
+            isDragging = true;
+            divider.setPointerCapture(e.pointerId);
+        });
+
+        divider.addEventListener("pointermove", (e) => {
+            if (!isDragging) return;
+
+            const mapWidth = window.innerWidth;
+            const position = Math.max(0, Math.min(e.clientX, mapWidth));
+
+            divider.style.left = `${position}px`;
+            comparisonContainer.style.clipPath = `inset(0 0 0 ${position}px)`;
+
+            if (activePopup && activePopupType === "town") {
+                const popupElement = activePopup.getElement();
+
+                if (popupElement) {
+                    const popupX = map.project(activePopup.getLngLat()).x;
+
+                    const mapLeft = map.getContainer().getBoundingClientRect().left;
+
+                    const dividerX = divider.getBoundingClientRect().left
+                        + divider.getBoundingClientRect().width / 2
+                        - mapLeft;
+
+                    const shouldShow = activePopupSide === "income"
+                        ? popupX <= dividerX
+                        : popupX >= dividerX;
+
+                    popupElement.style.visibility = shouldShow
+                        ? "visible"
+                        : "hidden";
+                }
+            }
+        });
+
+        divider.addEventListener("pointerup", () => {
+            isDragging = false;
+        });
+
+
+        comparisonMap.on("load", () => {
+            comparisonMap.addSource("towns", {
+                type: "vector",
+                url: "pmtiles://./data/vermont_grants.pmtiles?v=2"
+            });
+
+            comparisonMap.addLayer({
+                id: "funding-fill",
+                type: "fill",
+                source: "towns",
+                "source-layer": "towns",
+                paint: {
+                    "fill-color": [
+                        "step",
+                        ["get", "total_awarded"],
+                        "#484848",
+                        1, "#fee8c8",
+                        25000, "#fdbb84",
+                        75000, "#e34a33",
+                        150000, "#b30000"
+                    ],
+                    "fill-opacity": 1
+                }
+            });
+
+            comparisonMap.addLayer({
+                id: "funding-outline",
+                type: "line",
+                source: "towns",
+                "source-layer": "towns",
+                paint: {
+                    "line-color": "#333333",
+                    "line-width": 0.5,
+                    "line-opacity": 0.7
+                }
+            });
+
+
+            comparisonMap.addSource("barns", {
+                type: "vector",
+                url: "pmtiles://./data/vermont_grants.pmtiles?v=2"
+            });
+
+            comparisonMap.addLayer({
+                id: "barn-points",
+                type: "circle",
+                source: "barns",
+                "source-layer": "barns",
+                paint: {
+                    "circle-radius": 4,
+                    "circle-color": "#ffffff",
+                    "circle-stroke-color": "#222222",
+                    "circle-stroke-width": 1
+                }
+            });
+
+            comparisonMap.addLayer({
+                id: "barn-center-dots",
+                type: "circle",
+                source: "barns",
+                "source-layer": "barns",
+                paint: {
+                    "circle-radius": 1.5,
+                    "circle-color": "#1687ff"
+                }
+            });
+        });
+
+
+        map.on("mousemove", (e) => {
+            const barns = map.queryRenderedFeatures(e.point, {
+                layers: ["barn-points"]
+            });
+
+            map.getCanvas().style.cursor =
+                barns.length > 0 ? "pointer" : "";
+        });
+
+        map.on("load", () => {
+            map.addSource("towns", {
+                type: "vector",
+                url: "pmtiles://./data/vermont_grants.pmtiles?v=2"
+            });
+
+            map.addLayer({
+                id: "towns-fill",
+                type: "fill",
+                source: "towns",
+                "source-layer": "towns",
+                paint: {
+                    "fill-color": [
+                        "case",
+                        ["==", ["get", "median_household_income"], null],
+                        "#d9d9d9",
+                        [
+                            "step",
+                            ["get", "median_household_income"],
+                            "#ffffcc",
+                            67000, "#c2e699",
+                            76000, "#78c679",
+                            86000, "#31a354",
+                            101000, "#006837"
+                        ]
+                    ],
+
+                    "fill-opacity": 1
+                }
+            });
+
+            map.addLayer({
+                id: "town-outline",
+                type: "line",
+                source: "towns",
+                "source-layer": "towns",
+                paint: {
+                    "line-color": "#333333",
+                    "line-width": 0.5,
+                    "line-opacity": 0.7
+                }
+            });
+
+            map.on("click", "barn-points", (e) => {
+                const barn = e.features[0].properties;
+
+                activePopup?.remove();
+
+                activePopupType = "barn";
+                activePopupSide = null;
+
+                const dividerX = divider.getBoundingClientRect().left
+                    + divider.getBoundingClientRect().width / 2;
+
+                const isFundingSide = e.point.x > dividerX;
+
+                activePopup = new maplibregl.Popup({ maxWidth: "380px" })
+                    .setLngLat(e.lngLat)
+                    .setHTML(`
+                        <strong>${barn.Bus_building || "Historic Barn"}</strong>
+                        ${barn.photo_url
+                            ? `<img class="barn-popup-photo" src="${barn.photo_url}" alt="${barn.Bus_building || "Historic barn"}">`
+                            : ""
+                        }
+                        <p><b>Town:</b> ${barn.Town || "Unknown"}</p>
+                        <p><b>Year Awarded:</b> ${barn.YearAwarded ?? "Unknown"}</p>
+                        <p><b>Grant Amount:</b> ${barn.Allocated != null
+                            ? "$" + Number(barn.Allocated).toLocaleString()
+                            : "Unavailable"
+                        }</p>
+                        <p>${barn.Descript || ""}</p>
+                    `)
+                    .addTo(map);
+            });
+
+
+            map.on("click", (e) => {
+                const clickedBarns = map.queryRenderedFeatures(e.point, {
+                    layers: ["barn-points"]
+                });
+
+                if (clickedBarns.length > 0) return;
+
+                const divider = document.getElementById("swipe-divider");
+                const dividerX = divider.getBoundingClientRect().left
+                    + divider.getBoundingClientRect().width / 2;
+
+                const isFundingSide = e.point.x > dividerX;
+
+                const townMap = isFundingSide ? comparisonMap : map;
+                const townLayer = isFundingSide ? "funding-fill" : "towns-fill";
+
+                if (!townMap.getLayer(townLayer)) return;
+
+                const clickedTowns = townMap.queryRenderedFeatures(e.point, {
+                    layers: [townLayer]
+                });
+
+                if (clickedTowns.length === 0) return;
+
+                const properties = clickedTowns[0].properties;
+
+                activePopup?.remove();
+                activePopup = new maplibregl.Popup()
+                    .setLngLat(e.lngLat)
+
+                    .setHTML(`
+                        <h3>${getTownDisplayName(properties)}</h3>
+                        ${isFundingSide
+                            ? `<p>Total Known Funding: $${Number(properties.total_awarded).toLocaleString()}</p>
+                                <p>Barn Grants: ${properties.grant_count}</p>`
+                            : `<p>Median Household Income: ${properties.median_household_income == null
+                                ? "Data unavailable"
+                                : "$" + Number(properties.median_household_income).toLocaleString()
+                            }</p>`
+                        }
+                    `)
+
+                    .addTo(isFundingSide ? comparisonMap : map);
+
+                activePopupType = "town";
+                activePopupSide = isFundingSide ? "funding" : "income";
+
+            });
+
+            // Load individual barn grant locations
+            map.addSource("barns", {
+                type: "vector",
+                url: "pmtiles://./data/vermont_grants.pmtiles?v=2"
+            });
+
+            // Display barn locations as circles
+            map.addLayer({
+                id: "barn-points",
+                type: "circle",
+                source: "barns",
+                "source-layer": "barns",
+                paint: {
+                    "circle-radius": 4,
+                    "circle-color": "#ffffff",
+                    "circle-stroke-color": "#222222",
+                    "circle-stroke-width": 1
+                }
+            });
+
+            map.addLayer({
+                id: "barn-center-dots",
+                type: "circle",
+                source: "barns",
+                "source-layer": "barns",
+                paint: {
+                    "circle-radius": 1.5,
+                    "circle-color": "#1687ff"
+                }
+            });
+
+        });
+    </script>
+
+</body>
+
+</html>
