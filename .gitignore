@@ -11,9 +11,6 @@ __pycache__/
 #Folders
 /supplemental_pre2015_research_2026-09-30/
 
-#Imagefile
-plt.png
-
 #Data processing folder
 /data/
 
